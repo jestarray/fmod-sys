@@ -6,10 +6,10 @@ use std::{env, path::Path};
 fn main() {
     let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     //println!("{}", dir);
-    /* println!(
+    println!(
         "cargo:rustc-link-search={}",
         Path::new(&dir).join("lib").to_str().unwrap()
-    ); */
+    );
     // todo: link to debugmode dlls the "L" in fmodL.dll are debug ones that print debug info out
     println!("cargo:rustc-link-lib=fmod");
     //println!("cargo:rustc-link-lib=dylib=fmod");
