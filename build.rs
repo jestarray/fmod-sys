@@ -14,8 +14,7 @@ fn main() {
     println!("cargo:rustc-link-lib=fmod");
     //println!("cargo:rustc-link-lib=dylib=fmod");
 
-    // have to copy fmod.lib and name that to fmodstudio.lib in order for this feature to work
-
+    // have to copy fmodstudio_vc.lib and name that to fmodstudio.lib in order for this feature to work
     #[cfg(feature = "studio")]
     println!("cargo:rustc-link-lib=fmodstudio");
     //println!("cargo:rustc-link-lib=dylib=fmodstudio");
