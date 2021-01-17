@@ -1,13 +1,24 @@
 extern crate bindgen;
 
-use std::env;
 use std::path::PathBuf;
+use std::{env, path::Path};
 
 fn main() {
+    let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    //println!("{}", dir);
+    /* println!(
+        "cargo:rustc-link-search={}",
+        Path::new(&dir).join("lib").to_str().unwrap()
+    ); */
+    // todo: link to debugmode dlls the "L" in fmodL.dll are debug ones that print debug info out
     println!("cargo:rustc-link-lib=fmod");
+    //println!("cargo:rustc-link-lib=dylib=fmod");
+
+    // have to copy fmod.lib and name that to fmodstudio.lib in order for this feature to work
 
     #[cfg(feature = "studio")]
     println!("cargo:rustc-link-lib=fmodstudio");
+    //println!("cargo:rustc-link-lib=dylib=fmodstudio");
 
     let bindings = bindgen::Builder::default()
         .header("core-wrapper.h")

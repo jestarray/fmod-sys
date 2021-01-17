@@ -1,22 +1,21 @@
 [package]
-name = "fmod-sys"
-version = "0.1.1"
-authors = ["Jonathan Johnson <jon@khonsulabs.com>"]
-edition = "2018"
-license-file = "LICENSE"
-description = "Bindgen wrappers around the FMOD Core and Studio libraries"
-readme = "README.md"
-repository = "https://github.com/khonsulabs/fmod-sys"
-keywords = ["gamedev", "audio", "fmod"]
+authors = ["jestarray"]
 categories = ["external-ffi-bindings", "multimedia::audio"]
-
+description = "Bindgen wrappers around the FMOD Core and Studio libraries"
+edition = "2018"
+keywords = ["gamedev", "audio", "fmod"]
+license-file = "LICENSE"
+name = "fmod-sys"
+readme = "README.md"
+repository = "https://github.com/jestarray/fmod-sys"
+version = "0.1.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = []
-studio=[]
+studio = []
 
 [dependencies]
 
 [build-dependencies]
-bindgen = "0.53"
+bindgen = "0.56.0"
