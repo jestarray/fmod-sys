@@ -28,6 +28,14 @@ By default, the core library and its API is all that is exported. If you want to
 fmod-sys = { git = "https://github.com/jestarray/fmod-sys.git", features = ["studio"] }
 ```
 
+# Enabling Debug logging features of fmod
+
+```toml
+[dependencies]
+fmod-sys = { git = "https://github.com/jestarray/fmod-sys.git", features = ["Debug"] }
+```
+
+
 # Building
 
 To update the headers, just copy them into the fmodapi folder, make sure the LICENSE.TXT doesn't need to be updated, and then the build.rs script should automatically generate the new bindings.
@@ -39,4 +47,5 @@ When attempting to run an application linking against libfmod.dylib without sign
 However, once you've done this step, you can run the application until you replace the library wth a new version.
 
 # todo
-- put all the fmod.dlls into a lib folder. For some reason I can't get bindgen to look in the folder
+- put all the fmod.dlls into a lib folder. For some reason I can't get bindgen to look in the folder(seems like we cant really for windows?)
+- examples

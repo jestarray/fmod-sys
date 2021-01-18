@@ -10,17 +10,24 @@ fn main() {
         "cargo:rustc-link-search={}",
         Path::new(&dir).join("lib").to_str().unwrap()
     ); */
-    // todo: link to debugmode dlls the "L" in fmodL.dll are debug ones that print debug info out
-    println!("cargo:rustc-link-lib=fmod");
-    //println!("cargo:rustc-link-lib=dylib=fmod");
 
-    // have to copy fmodstudio_vc.lib and name that to fmodstudio.lib in order for this feature to work
-    #[cfg(feature = "studio")]
+    // copy fmodL_vc.lib and name it to: fmodL.lib
+    #[cfg(not(feature = "debug"))]
+    println!("cargo:rustc-link-lib=fmod");
+
+    #[cfg(feature = "debug")]
+    println!("cargo:rustc-link-lib=fmodL");
+
+    // have to copy fmodstudio_vc.lib and name that to fmodstudioL.lib in order for this feature to work
+    #[cfg(all(feature = "studio", feature = "debug"))]
+    println!("cargo:rustc-link-lib=fmodstudioL");
+
+    #[cfg(all(feature = "studio", not(feature = "debug")))]
     println!("cargo:rustc-link-lib=fmodstudio");
-    //println!("cargo:rustc-link-lib=dylib=fmodstudio");
 
     let bindings = bindgen::Builder::default()
         .header("core-wrapper.h")
+        .rustified_enum("*")
         .generate()
         .expect("Unable to generate core bindings");
 
@@ -31,6 +38,7 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("studio-wrapper.h")
+        .rustified_enum("*")
         .generate()
         .expect("Unable to generate studio bindings");
 
