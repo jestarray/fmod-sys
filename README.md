@@ -46,6 +46,13 @@ When attempting to run an application linking against libfmod.dylib without sign
 
 However, once you've done this step, you can run the application until you replace the library wth a new version.
 
+## Windows Notes:
+The `_vc` suffix on the `.lib` files for windows need to be removed. Stick all the `.dll` and `.lib` in the root folder of your project. For shipping your game you only need to include `fmod.dll` and `fmodstudio.dll`
+
+## Linux Notes:
+For linux you may need to tell rust where to look for the libfmod files. Add where to find it in `.bash_profile`
+`export LD_LIBRARY_PATH="PATH/TO/FMODLIBS"`
+
 # todo
 - put all the fmod.dlls into a lib folder. For some reason I can't get bindgen to look in the folder(seems like we cant really for windows?)
 - examples
