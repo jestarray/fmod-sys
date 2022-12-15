@@ -52,7 +52,7 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("core-wrapper.h")
-        .rustified_enum("*")
+        .rustified_enum(".*")
         .derive_default(true)
         .generate()
         .expect("Unable to generate core bindings");
@@ -64,7 +64,7 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header("studio-wrapper.h")
-        .rustified_enum("*")
+        .rustified_enum(".*")
         .derive_default(true)
         .generate()
         .expect("Unable to generate studio bindings");

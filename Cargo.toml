@@ -13,7 +13,7 @@ version = "0.1.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 debug = [] # link with the debug dlls instead
-default = []
+default = [] # put the string "studio" to run test for studio
 studio = []
 
 [dependencies]

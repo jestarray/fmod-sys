@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn fmod_test_create_release() {
         let mut system: *mut FMOD_SYSTEM = ptr::null_mut();
-        let result = unsafe { FMOD_System_Create(&mut system) };
+        let result = unsafe { FMOD_System_Create(&mut system, FMOD_VERSION) };
         assert_eq!(result, FMOD_RESULT::FMOD_OK);
         let result = unsafe { FMOD_System_Release(system) };
         assert_eq!(result, FMOD_RESULT::FMOD_OK);
