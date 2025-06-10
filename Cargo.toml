@@ -15,8 +15,9 @@ version = "0.1.1"
 debug = []   # link with the debug dlls instead
 default = [] # put the string "studio" to run test for studio
 studio = []
+bindgen = ["dep:bindgen"] # generate bindings from header files instead of copying pregenerated ones
 
 [dependencies]
 
 [build-dependencies]
-bindgen = "0.71"
+bindgen = {version = "0.71", optional = true}

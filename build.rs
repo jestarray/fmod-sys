@@ -1,5 +1,3 @@
-extern crate bindgen;
-
 use std::env;
 use std::path::PathBuf;
 
@@ -50,27 +48,50 @@ fn main() {
         println!("cargo:rustc-link-lib=fmodstudioL");
     }
 
-    let bindings = bindgen::Builder::default()
-        .header("core-wrapper.h")
-        .rustified_enum(".*")
-        .derive_default(true)
-        .generate()
-        .expect("Unable to generate core bindings");
+    let bindings_core = "bindings-core.rs";
+    #[allow(unused_variables)]
+    let bindings_studio = "bindings-studio.rs";
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    #[cfg(feature = "bindgen")]
+    {
+        use bindgen;
+        let bindings = bindgen::Builder::default()
+            .header("core-wrapper.h")
+            .rustified_enum(".*")
+            .derive_default(true)
+            .generate()
+            .expect("Unable to generate core bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings-core.rs"))
-        .expect("Couldn't write core bindings!");
+        bindings
+            .write_to_file(out_dir.join(bindings_core))
+            .expect("Couldn't write core bindings!");
 
-    let bindings = bindgen::Builder::default()
-        .header("studio-wrapper.h")
-        .rustified_enum(".*")
-        .derive_default(true)
-        .generate()
-        .expect("Unable to generate studio bindings");
+        #[cfg(feature = "studio")]
+        {
+            let bindings = bindgen::Builder::default()
+                .header("studio-wrapper.h")
+                .rustified_enum(".*")
+                .derive_default(true)
+                .generate()
+                .expect("Unable to generate studio bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings-studio.rs"))
-        .expect("Couldn't write studio bindings!");
+            bindings
+                .write_to_file(out_dir.join(bindings_studio))
+                .expect("Couldn't write studio bindings!");
+        }
+    }
+
+    #[cfg(not(feature = "bindgen"))]
+    {
+        // copy pre-generated bindings to out dir
+        let gen_dir = PathBuf::from("./pre-gen/");
+        let core_bindings = gen_dir.join(bindings_core);
+        std::fs::copy(core_bindings, out_dir.join(bindings_core)).unwrap();
+
+        #[cfg(feature = "studio")]
+        {
+            let studio_bindings = gen_dir.join(bindings_studio);
+            std::fs::copy(studio_bindings, out_dir.join(bindings_studio)).unwrap();
+        }
+    }
 }
