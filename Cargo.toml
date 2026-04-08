@@ -20,4 +20,4 @@ bindgen = ["dep:bindgen"] # generate bindings from header files instead of copyi
 [dependencies]
 
 [build-dependencies]
-bindgen = {version = "0.71", optional = true}
+bindgen = {version = "0.72", optional = true}

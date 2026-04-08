@@ -1,50 +1,67 @@
 use std::env;
-use std::path::PathBuf;
+use std::fs;
+use std::io;
+use std::path::{Path, PathBuf};
 
 fn main() {
-    let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    //println!("{}", dir);
-    /*   println!(
-           "cargo:rustc-link-search={}",
-           Path::new(&dir).join("lib").to_str().unwrap()
-       );
-    */
-    //println!("cargo:rustc-link-search=/mnt/z/project_s");
-    //dbg!(dir);
-    // copy fmodL_vc.lib and name it to: fmodL.lib
+    // if running into issues with windows not being able to find the dll, copy fmodL_vc.lib and name it to: fmodL.lib
+    //https://www.fmod.com/docs/2.03/api/platforms-win.html#libraries
+
+    #[cfg(target_os = "windows")]
     {
         //WINDOWS
-        #[cfg(all(not(feature = "debug"), target_os = "windows"))]
-        println!("cargo:rustc-link-lib=fmod");
+        #[cfg(not(feature = "debug"))]
+        println!("cargo:rustc-link-lib=fmod_vc");
 
-        #[cfg(all(feature = "debug", target_os = "windows"))]
-        println!("cargo:rustc-link-lib=fmodL");
+        #[cfg(feature = "debug")]
+        println!("cargo:rustc-link-lib=fmodL_vc");
 
-        //https://fmod.com/resources/documentation-api?version=2.1&page=platforms-windows.html#libraries
-        //_vc are release binaries
+        #[cfg(all(feature = "studio", feature = "debug"))]
+        println!("cargo:rustc-link-lib=fmodstudioL_vc");
 
-        // have to copy fmodstudio_vc.lib and name that to fmodstudioL.lib in order for this feature to work
-        #[cfg(all(feature = "studio", feature = "debug", target_os = "windows"))]
-        println!("cargo:rustc-link-lib=fmodstudioL");
-
-        #[cfg(all(feature = "studio", not(feature = "debug"), target_os = "windows"))]
-        println!("cargo:rustc-link-lib=fmodstudio");
+        #[cfg(all(feature = "studio", not(feature = "debug")))]
+        println!("cargo:rustc-link-lib=fmodstudio_vc");
     }
 
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     {
-        #[cfg(target_os = "linux")]
+        let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+
+        // copy the lib files to a lib folder in target
+        // note that you will have to configure rust rpath to $ORIGIN/lib . See README.md
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        let lib_folder = Path::new(&dir).join("lib_x64_linux");
+
+        #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+        let lib_folder = Path::new(&dir).join("lib_arm64_linux");
+
+        #[cfg(target_os = "macos")]
+        let lib_folder = Path::new(&dir).join("lib_macos");
+
+        let dir = lib_folder.to_str().unwrap();
         println!("cargo:rustc-link-search={}", dir);
-        //LINUX
-        #[cfg(all(not(feature = "debug"), target_os = "linux"))]
+
+        let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+        // This usually gets you to target/debug or target/release
+        let target_dir = out_dir.ancestors().nth(3).unwrap();
+        let target_lib_dir = target_dir.join("lib");
+
+        // Create the target/debug/lib folder if it doesn't exist
+        fs::create_dir_all(&target_lib_dir).ok();
+
+        // Copy the library there so 'cargo run' works
+        let _ = copy_dir_all(dir, target_lib_dir);
+
+        #[cfg(not(feature = "debug"))]
         println!("cargo:rustc-link-lib=fmod");
 
-        #[cfg(all(feature = "debug", target_os = "linux"))]
+        #[cfg(feature = "debug")]
         println!("cargo:rustc-link-lib=fmodL");
 
-        #[cfg(all(feature = "studio", not(feature = "debug"), target_os = "linux"))]
+        #[cfg(all(feature = "studio", not(feature = "debug")))]
         println!("cargo:rustc-link-lib=fmodstudio");
 
-        #[cfg(all(feature = "studio", feature = "debug", target_os = "linux"))]
+        #[cfg(all(feature = "studio", feature = "debug"))]
         println!("cargo:rustc-link-lib=fmodstudioL");
     }
 
@@ -94,4 +111,23 @@ fn main() {
             std::fs::copy(studio_bindings, out_dir.join(bindings_studio)).unwrap();
         }
     }
+}
+
+#[allow(unused)]
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
+    fs::create_dir_all(&dst)?;
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let dest_path = dst.as_ref().join(entry.file_name());
+
+        if file_type.is_dir() {
+            copy_dir_all(entry.path(), &dest_path)?;
+        } else {
+            fs::copy(entry.path(), dest_path)?;
+        }
+    }
+
+    Ok(())
 }
