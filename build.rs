@@ -4,11 +4,13 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 fn main() {
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+
     // if running into issues with windows not being able to find the dll, copy fmodL_vc.lib and name it to: fmodL.lib
     //https://www.fmod.com/docs/2.03/api/platforms-win.html#libraries
 
-    #[cfg(target_os = "windows")]
-    {
+    if target_os == "windows" {
         //WINDOWS
         #[cfg(not(feature = "debug"))]
         println!("cargo:rustc-link-lib=fmod_vc");
@@ -21,24 +23,21 @@ fn main() {
 
         #[cfg(all(feature = "studio", not(feature = "debug")))]
         println!("cargo:rustc-link-lib=fmodstudio_vc");
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    {
+    } else {
         let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-
         // copy the lib files to a lib folder in target
         // note that you will have to configure rust rpath to $ORIGIN/lib . See README.md
-        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-        let lib_folder = Path::new(&dir).join("lib_x64_linux");
-
-        #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
-        let lib_folder = Path::new(&dir).join("lib_arm64_linux");
-
-        #[cfg(target_os = "macos")]
-        let lib_folder = Path::new(&dir).join("lib_macos");
-
+        let lib_folder = if target_os == "linux" && target_arch == "x86_64" {
+            Path::new(&dir).join("lib_x64_linux")
+        } else if target_os == "linux" && target_arch == "aarch64" {
+            Path::new(&dir).join("lib_arm64_linux")
+        } else if target_os == "macos" {
+            Path::new(&dir).join("lib_macos")
+        } else {
+            panic!("Unsupported target: {}-{}", target_arch, target_os);
+        };
         let dir = lib_folder.to_str().unwrap();
+
         println!("cargo:rustc-link-search={}", dir);
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
