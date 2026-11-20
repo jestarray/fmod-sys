@@ -1,4 +1,5 @@
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -27,29 +28,48 @@ fn main() {
         let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
         // copy the lib files to a lib folder in target
         // note that you will have to configure rust rpath to $ORIGIN/lib . See README.md
-        let lib_folder = if target_os == "linux" && target_arch == "x86_64" {
+        println!("cargo:rerun-if-env-changed=FMOD_ANDROID_LIB_DIR");
+        let lib_folder = if target_os == "android" {
+            PathBuf::from(env::var("FMOD_ANDROID_LIB_DIR")
+                .expect("Set FMOD_ANDROID_LIB_DIR to Android SDK libraries; Linux ARM64 libraries do not work on Android"))
+        } else if target_os == "linux" && target_arch == "x86_64" {
             Path::new(&dir).join("lib_x64_linux")
         } else if target_os == "linux" && target_arch == "aarch64" {
             Path::new(&dir).join("lib_arm64_linux")
         } else if target_os == "macos" {
             Path::new(&dir).join("lib_macos")
+
         } else {
-            panic!("Unsupported target: {}-{}", target_arch, target_os);
+            panic!(
+                "cargo:warning=Unsupported target: {}-{}",
+                target_arch, target_os
+            );
         };
         let dir = lib_folder.to_str().unwrap();
 
         println!("cargo:rustc-link-search={}", dir);
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-        // This usually gets you to target/debug or target/release
-        let target_dir = out_dir.ancestors().nth(3).unwrap();
+        // OUT_DIR is <target>/<profile>/build/<pkg>-<hash>/out or
+        // <target>/<profile>/build/<pkg>/<hash>/out depending on the cargo version,
+        // so anchor on the `build` component instead of counting ancestors.
+        let target_dir = out_dir
+            .ancestors()
+            .find(|p| p.file_name() == Some(OsStr::new("build")))
+            .and_then(Path::parent)
+            .unwrap_or_else(|| panic!("OUT_DIR not inside a build dir: {}", out_dir.display()));
         let target_lib_dir = target_dir.join("lib");
 
-        // Create the target/debug/lib folder if it doesn't exist
-        fs::create_dir_all(&target_lib_dir).ok();
-
-        // Copy the library there so 'cargo run' works
-        let _ = copy_dir_all(dir, target_lib_dir);
+        // Copy the library there so 'cargo run' works via the $ORIGIN/lib rpath.
+        // Fail loudly: a silent failure here only surfaces later as a loader error.
+        fs::create_dir_all(&target_lib_dir)
+            .unwrap_or_else(|e| panic!("failed to create {}: {e}", target_lib_dir.display()));
+        copy_dir_all(dir, &target_lib_dir).unwrap_or_else(|e| {
+            panic!(
+                "failed to copy fmod libraries to {}: {e}",
+                target_lib_dir.display()
+            )
+        });
 
         #[cfg(not(feature = "debug"))]
         println!("cargo:rustc-link-lib=fmod");
